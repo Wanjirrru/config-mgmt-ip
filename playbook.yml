@@ -1,0 +1,16 @@
+---
+- name: Deploy Yolo E-commerce App with Ansible
+  hosts: all
+  become: true
+  vars_files:
+    - group_vars/all.yml
+
+  roles:
+    - common
+    - docker-install
+    - clone-repo
+    - yolo-network
+    - mongo-volume
+    - mongo
+    - backend
+    - frontend
