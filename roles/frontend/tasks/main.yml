@@ -1,0 +1,25 @@
+---
+- block:
+    - name: Build frontend image
+      community.docker.docker_image:
+        name: "{{ frontend_image_name }}:latest"
+        build:
+          path: "{{ app_dir }}"
+          dockerfile: "{{ frontend_dockerfile }}"
+        source: build
+        state: present
+      tags: frontend-build
+
+- name: Run frontend container
+  community.docker.docker_container:
+    name: yolo-frontend
+    image: "{{ frontend_image_name }}:latest"
+    state: started
+    restart_policy: unless-stopped
+    ports:
+      - "3000:80"
+    networks:
+      - name: "{{ network_name }}"
+    command: >
+      sh -c "until ping -c1 yolo-backend >/dev/null 2>&1; do sleep 1; done; nginx -g 'daemon off;'"
+  tags: frontend

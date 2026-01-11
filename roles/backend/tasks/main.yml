@@ -1,0 +1,27 @@
+---
+- block:
+    - name: Build backend image
+      community.docker.docker_image:
+        name: "{{ backend_image_name }}:latest"
+        build:
+          path: "{{ app_dir }}"
+          dockerfile: "{{ backend_dockerfile }}"
+        source: build
+        state: present
+      tags: backend-build
+
+    - name: Run backend container
+      community.docker.docker_container:
+        name: yolo-backend
+        image: "{{ backend_image_name }}:latest"
+        state: started
+        restart_policy: unless-stopped
+        env:
+          MONGO_URI: "mongodb://{{ mongo_container_name }}:27017/{{ mongo_db_name }}"
+        ports:
+          - "{{ backend_port }}"
+        networks:
+          - name: "{{ network_name }}"
+            aliases:
+              - backend
+  tags: backend

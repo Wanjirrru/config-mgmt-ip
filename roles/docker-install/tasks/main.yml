@@ -1,0 +1,38 @@
+---
+- name: Install Docker from Ubuntu repository (docker.io)
+  apt:
+    name:
+      - docker.io
+      - docker-compose  # or docker-compose-plugin if you need compose v2
+    state: present
+    update_cache: yes
+  become: true
+  tags: docker
+
+- name: Ensure Docker service is started and enabled
+  service:
+    name: docker
+    state: started
+    enabled: yes
+  become: true
+  tags: docker
+
+- name: Add vagrant user to docker group
+  user:
+    name: vagrant
+    groups: docker
+    append: yes
+  become: true
+  tags: docker
+
+- name: Verify Docker is working
+  command: docker --version
+  register: docker_version
+  changed_when: false
+  become: true
+  tags: docker
+
+- name: Debug Docker version
+  debug:
+    msg: "{{ docker_version.stdout }}"
+  tags: docker

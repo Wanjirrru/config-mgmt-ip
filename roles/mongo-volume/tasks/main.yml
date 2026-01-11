@@ -1,0 +1,5 @@
+---
+- name: Create MongoDB volume
+  community.docker.docker_volume:
+    name: "{{ mongo_volume_name }}"
+  tags: volume

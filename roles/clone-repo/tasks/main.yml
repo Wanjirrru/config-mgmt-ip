@@ -1,0 +1,15 @@
+---
+- name: Ensure app directory exists
+  file:
+    path: "{{ app_dir }}"
+    state: directory
+    mode: '0755'
+  tags: clone
+
+- name: Clone GitHub repo
+  git:
+    repo: "{{ git_repo }}"
+    dest: "{{ app_dir }}"
+    version: docker-containerization   # ← Change this line
+    force: yes
+  tags: clone

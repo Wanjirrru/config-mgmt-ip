@@ -1,0 +1,19 @@
+---
+- block:
+    - name: Pull and run Mongo container
+      community.docker.docker_container:
+        name: "{{ mongo_container_name }}"
+        image: "{{ mongo_image }}"
+        state: started
+        restart_policy: unless-stopped
+        ports:
+          - "27017:27017"
+        volumes:
+          - "{{ mongo_volume_name }}:/data/db"
+        networks:
+          - name: "{{ network_name }}"
+  rescue:
+    - name: Log error if Mongo fails
+      debug:
+        msg: "Mongo container failed to start—check logs"
+  tags: mongo

@@ -1,0 +1,6 @@
+---
+- name: Create Docker network
+  community.docker.docker_network:
+    name: "{{ network_name }}"
+    driver: bridge
+  tags: network

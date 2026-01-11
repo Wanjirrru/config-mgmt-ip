@@ -1,0 +1,14 @@
+git_repo: https://github.com/Wanjirrru/yolo.git
+git_branch: docker-containerization
+app_dir: /opt/yolo
+mongo_image: mongo:7
+mongo_container_name: yolo-mongo
+mongo_volume_name: mongo-data
+mongo_db_name: yolo-db
+backend_image_name: yolo-backend
+backend_dockerfile: Dockerfile.backend
+backend_port: "5000:5000"
+frontend_image_name: yolo-frontend
+frontend_dockerfile: Dockerfile.frontend
+frontend_port: "3000:80"
+network_name: yolo-network
