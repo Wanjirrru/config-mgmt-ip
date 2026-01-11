@@ -8,7 +8,7 @@
     - name: Initialize Terraform
       terraform:
         project_path: ../terraform
-        state: init
+        state: present
 
     - name: Apply Terraform configuration
       terraform:
