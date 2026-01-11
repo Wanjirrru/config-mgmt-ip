@@ -6,6 +6,7 @@
         build:
           path: "{{ app_dir }}"
           dockerfile: "{{ frontend_dockerfile }}"
+          nocache: yes
         source: build
         state: present
       tags: frontend-build
@@ -20,14 +21,14 @@
       - "3000:80"
     networks:
       - name: "{{ network_name }}"
-    command: >-
+    command: >
       sh -c "
-        echo 'Waiting for backend to be ready...';
-        until ping -c1 backend >/dev/null 2>&1; do
-          echo 'Backend not ready yet... sleeping 2s';
+        echo 'Waiting for backend alias to be available...';
+        until nslookup backend >/dev/null 2>&1; do
+          echo 'Backend not resolvable yet... sleeping 2s';
           sleep 2;
         done;
-        echo 'Backend is ready! Starting Nginx...';
-        exec nginx -g 'daemon off;'
+        echo 'Backend alias ready! Starting Nginx...';
+        exec /docker-entrypoint.sh nginx -g 'daemon off;'
       "
   tags: frontend
