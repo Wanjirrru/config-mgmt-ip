@@ -4,7 +4,9 @@ Vagrant.configure("2") do |config|
 
   config.vm.hostname = "yolo-dev"
 
-  config.vm.network "private_network", ip: "192.168.56.10"
+# Choose IP based on environment variable (set when running Stage 2)
+  ip_address = ENV['VAGRANT_IP'] || "192.168.56.10"  # Default = Stage 1
+  config.vm.network "private_network", ip: ip_address
 
   config.vm.provider "virtualbox" do |vb|
     vb.memory = "2048"
