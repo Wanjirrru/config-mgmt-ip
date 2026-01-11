@@ -6,6 +6,7 @@
         build:
           path: "{{ app_dir }}"
           dockerfile: "{{ backend_dockerfile }}"
+          nocache: yes
         source: build
         state: present
       tags: backend-build
