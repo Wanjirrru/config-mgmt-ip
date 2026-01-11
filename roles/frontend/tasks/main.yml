@@ -20,6 +20,4 @@
       - "3000:80"
     networks:
       - name: "{{ network_name }}"
-    command: >
-      sh -c "until ping -c1 yolo-backend >/dev/null 2>&1; do sleep 1; done; nginx -g 'daemon off;'"
   tags: frontend
