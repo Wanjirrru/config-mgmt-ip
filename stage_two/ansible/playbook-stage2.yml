@@ -1,0 +1,37 @@
+---
+- name: Provision infrastructure with Terraform
+  hosts: localhost
+  connection: local
+  collections:
+    - cloud.terraform   
+  tasks:
+    - name: Initialize Terraform
+      terraform:
+        project_path: ../terraform
+        state: init
+
+    - name: Apply Terraform configuration
+      terraform:
+        project_path: ../terraform
+        state: present
+      register: tf_apply
+
+    - name: Debug Terraform output
+      debug:
+        msg: "New VM IP: {{ tf_apply.outputs.vm_ip.value }}"
+
+- name: Configure and deploy application on new VM
+  hosts: new_vm
+  become: true
+  vars_files:
+    - ../../group_vars/all.yml   # reuse existing variables
+
+  roles:
+    - ../../roles/common
+    - ../../roles/docker-install
+    - ../../roles/clone-repo
+    - ../../roles/yolo-network
+    - ../../roles/mongo-volume
+    - ../../roles/mongo
+    - ../../roles/backend
+    - ../../roles/frontend
