@@ -33,15 +33,15 @@ resource "null_resource" "provision_yolo_stage2" {
     vm_destroy = "${timestamp()}"  # Force full re-run
   }
 
-  provisioner "local-exec" {
-    command = <<EOT
-      echo "===== Starting Stage 2 Deployment ====="
-      cd ../../ && vagrant up --provider=virtualbox
-      echo "Vagrant VM is up. Running Ansible playbook..."
-      vagrant ssh -c "cd /vagrant && ansible-playbook stage_two/ansible/playbook-stage2.yml"
-      echo "Deployment complete! Access app at http://${var.ip_address}:3000"
-    EOT
-  }
+provisioner "local-exec" {
+  command = <<EOT
+    echo "===== Starting Stage 2 Deployment ====="
+    cd ../../ && VAGRANT_IP=192.168.56.20 vagrant destroy -f && VAGRANT_IP=192.168.56.20 vagrant up --provider=virtualbox
+    echo "Vagrant VM is up with IP 192.168.56.20. Running Ansible..."
+    vagrant ssh -c "cd /vagrant && ansible-playbook stage_two/ansible/playbook-stage2.yml"
+    echo "Deployment complete! Access app at http://192.168.56.20:3000"
+  EOT
+}
 }
 
 # Output the IP for easy reference
