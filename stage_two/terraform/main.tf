@@ -1,3 +1,7 @@
+terraform {
+  required_version = ">= 1.0"
+}
+
 variable "vm_name" {
   description = "Name of the Vagrant VM"
   type        = string
@@ -23,28 +27,29 @@ variable "cpus" {
 variable "ip_address" {
   description = "Private IP for the VM"
   type        = string
-  default     = "192.168.56.20"   # Different from Stage 1 to avoid conflict
+  default     = "192.168.56.20"
 }
 
-# This resource triggers Vagrant up + Ansible deployment
-resource "null_resource" "provision_yolo_stage2" {
-  # Force re-run on every terraform apply (useful for testing)
+# This is a dummy resource — the real provisioning happens via local-exec
+resource "null_resource" "vagrant_provision" {
   triggers = {
-    vm_destroy = "${timestamp()}"  # Force full re-run
+    always_run = timestamp()  
   }
 
-provisioner "local-exec" {
-  command = <<EOT
-    echo "===== Starting Stage 2 Deployment ====="
-    cd ../../ && VAGRANT_IP=192.168.56.20 vagrant destroy -f && VAGRANT_IP=192.168.56.20 vagrant up --provider=virtualbox
-    echo "Vagrant VM is up with IP 192.168.56.20. Running Ansible..."
-    vagrant ssh -c "cd /vagrant && ansible-playbook stage_two/ansible/playbook-stage2.yml"
-    echo "Deployment complete! Access app at http://192.168.56.20:3000"
-  EOT
-}
+  provisioner "local-exec" {
+    command = <<EOT
+      echo "===== Provisioning Stage 2 with Vagrant & Ansible ====="
+      cd ../..  # Go to repo root
+      export VAGRANT_IP=${var.ip_address}
+      vagrant destroy -f || true
+      vagrant up --provider=virtualbox
+      echo "Vagrant up complete. Running Ansible from inside VM..."
+      vagrant ssh -c "cd /vagrant && ansible-playbook playbook.yml --extra-vars 'vm_ip=${var.ip_address}'"
+      echo "Deployment finished! App should be at http://${var.ip_address}:3000"
+    EOT
+  }
 }
 
-# Output the IP for easy reference
 output "vm_ip" {
   value       = var.ip_address
   description = "IP address of the Stage 2 VM"
