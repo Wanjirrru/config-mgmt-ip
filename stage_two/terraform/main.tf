@@ -1,41 +1,52 @@
-# main.tf - Core configuration for Stage 2 provisioning
+# main.tf - Stage 2: Terraform orchestrates Vagrant + remote Ansible (from host)
 terraform {
   required_version = ">= 1.0.0"
 }
-
-# Dummy resource that triggers the full Vagrant + Ansible workflow
 resource "null_resource" "provision_yolo_stage2" {
-  # Triggers re-run when force_reprovision changes (set via -var or tfvars)
   triggers = {
     force_reprovision = var.force_reprovision
-    # Optional: Add file hashes for better change detection (uncomment if desired)
-    # vagrantfile_hash = filesha256("../../Vagrantfile")
-    # playbook_hash    = filesha256("../../playbook.yml")
   }
 
   provisioner "local-exec" {
     command = <<EOT
-      echo "===== Starting Stage 2 Deployment (Terraform → Vagrant → Ansible) ====="
-      cd ../..  # Move to repo root
-      export VAGRANT_IP=${var.ip_address}
-      vagrant destroy -f || true
-      vagrant up --provider=${var.vagrant_provider}
-      echo "Vagrant VM is up at ${var.ip_address}. Running Ansible configuration..."
-      vagrant ssh -c "cd /vagrant && ansible-playbook playbook.yml --extra-vars 'vm_ip=${var.ip_address} app_port=${var.app_port}'"
-      echo "===== Deployment complete! ====="
-      echo "Access the Yolo e-commerce app at: http://${var.ip_address}:${var.app_port}"
-      echo "Test persistence: Add a product → vagrant halt/up → verify it remains"
-    EOT
+      set -e  # Exit on error
 
-    # Optional: Add error handling or environment setup
-    environment = {
-      VAGRANT_EXPERIMENTAL = "disks" # If using newer Vagrant features
-    }
+      echo "===== Starting Stage 2: Terraform → Vagrant → Ansible (remote from host) ====="
+
+      cd ../..  # Go to repo root (adjust if your structure is different)
+
+      echo "Destroying any existing VM (force)..."
+      vagrant destroy -f || true
+
+      echo "Bringing up Vagrant VM..."
+      vagrant up --provider=${var.vagrant_provider}
+
+      echo "Waiting for SSH to be ready on the VM..."
+      # Quick wait + test SSH connectivity
+      sleep 10
+      vagrant ssh-config > ssh-config.tmp
+      ssh -F ssh-config.tmp -o ConnectTimeout=5 -o StrictHostKeyChecking=no vagrant@localhost whoami || { echo "SSH not ready yet - waiting longer..."; sleep 20; }
+      rm -f ssh-config.tmp
+
+      echo "Running Ansible playbook remotely from host (using inventory/ansible.cfg)..."
+      # Run from root dir where ansible.cfg + hosts exist
+      ansible-playbook playbook.yml \
+        --extra-vars "vm_ip=${var.ip_address} app_port=${var.app_port}" \
+        --verbose || { echo "Ansible failed! Check logs."; exit 1; }
+
+      echo "===== Deployment complete! ====="
+      echo "Yolo e-commerce app should be at: http://${var.ip_address}:${var.app_port}"
+      echo "Test persistence: Add product → vagrant halt && vagrant up → verify data remains"
+    EOT
   }
 
-  # Optional: Clean up on destroy (good practice)
+  # Cleanup on terraform destroy
   provisioner "local-exec" {
     when    = destroy
-    command = "vagrant destroy -f || true"
+    command = <<EOT
+      cd ../.. || exit 0
+      vagrant destroy -f || true
+      echo "Cleaned up Vagrant environment."
+    EOT
   }
 }
