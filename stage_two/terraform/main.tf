@@ -29,7 +29,7 @@ resource "null_resource" "provision_yolo_stage2" {
 
     # Optional: Add error handling or environment setup
     environment = {
-      VAGRANT_EXPERIMENTAL = "disks"  # If using newer Vagrant features
+      VAGRANT_EXPERIMENTAL = "disks" # If using newer Vagrant features
     }
   }
 

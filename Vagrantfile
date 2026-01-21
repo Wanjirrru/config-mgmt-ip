@@ -16,9 +16,8 @@ Vagrant.configure("2") do |config|
 config.vm.provision "ansible_local" do |ansible|
   ansible.playbook = "playbook.yml"
   ansible.install = true
-  ansible.install_mode = "pip_args"
-  ansible.pip_args = "--index-url https://pypi.org/simple"
-  ansible.pip_install_cmd = "curl https://bootstrap.pypa.io/pip/3.8/get-pip.py | sudo python3"
+  ansible.install_mode = "pip"
+  ansible.pip_install_cmd = "sudo apt update && sudo apt install -y python3-pip && sudo pip3 install ansible"
   ansible.galaxy_role_file = "requirements.yml"
 end
 end

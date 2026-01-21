@@ -50,5 +50,5 @@ variable "vagrant_provider" {
 variable "force_reprovision" {
   description = "Change this value (e.g. timestamp or random string) to force full destroy + reprovision"
   type        = string
-  default     = ""  # Empty = no force; override with -var 'force_reprovision=force-2026-01-21'
+  default     = "" # Empty = no force; override with -var 'force_reprovision=force-2026-01-21'
 }
