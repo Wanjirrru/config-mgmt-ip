@@ -1,32 +1,39 @@
-# Stage 1 Yolo E-commerce Application
-Ansible and Terraform for DevOps Automation
-This repo automates deployment of the Yolo e-commerce app (from https://github.com/Wanjirrru/yolo) using Ansible on a Vagrant VM.
+# Configuration Management IP - Stage 2  
+**Yolo E-commerce Platform with Terraform + Ansible**
 
-## Setup
-1. Install Vagrant, VirtualBox, Ansible, and `ansible-galaxy collection install community.docker`.
-2. `vagrant up` — provisions VM, runs Ansible, launches app.
-3. Access frontend: http://192.168.56.10:3000
-4. Test: Add a product via the form. Restart containers (`vagrant ssh` then `docker restart yolo-mongo yolo-backend yolo-frontend`)—product should persist due to volume.
+This project is **Stage 2** of the Configuration Management IP.  
+It uses **Terraform** to orchestrate the provisioning and then automatically triggers **Vagrant + Ansible** to deploy the same containerized Yolo e-commerce application.
 
-## Testing Persistence 
-- Add product
-- `docker stop` containers
-- `docker start` product remains
+**Live application URL after deployment:**  
+→ http://192.168.56.20:3000
 
-# Stage 2: Terraform + Ansible Integration
+## Project Overview
 
-Terraform uses `null_resource` + `local-exec` to:
-- Run `vagrant up` (provisions new VM at 192.168.56.20)
-- SSH into VM
-- Run Ansible playbook to deploy the same containerized app as Stage 1
+- **Stage 1** → Ansible + Vagrant only (single VM)  
+  → Located on the `stage_one` branch
+- **Stage 2** (this branch) → **Terraform** + Vagrant + Ansible  
+  → Creates a **second independent VM** (192.168.56.20)  
+  → Uses `null_resource` + `local-exec` to automatically run `vagrant up` and Ansible
 
-Run:
+## Quick Start – Stage 2
+
+```bash
+# 1. Make sure you are on stage_two branch
+git checkout stage_two
+
+# 2. Go into terraform folder
 cd stage_two/terraform
+
+# 3. Initialize terraform (only needed first time)
 terraform init
+
+# 4. Deploy everything with one command
 terraform apply -auto-approve
 
-Access app: http://192.168.56.20:3000
-
-Clean up:
+## Clean up
+# Destroy everything
 terraform destroy -auto-approve
-vagrant destroy -f   # from root
+
+# Also destroy the vagrant machine just to be super clean
+cd .. && vagrant destroy -f
+
