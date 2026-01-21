@@ -1,56 +1,41 @@
+# main.tf - Core configuration for Stage 2 provisioning
 terraform {
-  required_version = ">= 1.0"
+  required_version = ">= 1.0.0"
 }
 
-variable "vm_name" {
-  description = "Name of the Vagrant VM"
-  type        = string
-  default     = "yolo-stage2"
-}
-
-variable "box" {
-  description = "Vagrant box to use"
-  type        = string
-  default     = "geerlingguy/ubuntu2004"
-}
-
-variable "memory" {
-  type    = number
-  default = 2048
-}
-
-variable "cpus" {
-  type    = number
-  default = 2
-}
-
-variable "ip_address" {
-  description = "Private IP for the VM"
-  type        = string
-  default     = "192.168.56.20"
-}
-
-# This is a dummy resource — the real provisioning happens via local-exec
-resource "null_resource" "vagrant_provision" {
+# Dummy resource that triggers the full Vagrant + Ansible workflow
+resource "null_resource" "provision_yolo_stage2" {
+  # Triggers re-run when force_reprovision changes (set via -var or tfvars)
   triggers = {
-    always_run = timestamp()  
+    force_reprovision = var.force_reprovision
+    # Optional: Add file hashes for better change detection (uncomment if desired)
+    # vagrantfile_hash = filesha256("../../Vagrantfile")
+    # playbook_hash    = filesha256("../../playbook.yml")
   }
 
   provisioner "local-exec" {
     command = <<EOT
-      echo "===== Provisioning Stage 2 with Vagrant & Ansible ====="
-      cd ../..  # Go to repo root
+      echo "===== Starting Stage 2 Deployment (Terraform → Vagrant → Ansible) ====="
+      cd ../..  # Move to repo root
       export VAGRANT_IP=${var.ip_address}
       vagrant destroy -f || true
-      vagrant up --provider=virtualbox
-      echo "Vagrant up complete. Running Ansible from inside VM..."
-      vagrant ssh -c "cd /vagrant && ansible-playbook playbook.yml --extra-vars 'vm_ip=${var.ip_address}'"
-      echo "Deployment finished! App should be at http://${var.ip_address}:3000"
+      vagrant up --provider=${var.vagrant_provider}
+      echo "Vagrant VM is up at ${var.ip_address}. Running Ansible configuration..."
+      vagrant ssh -c "cd /vagrant && ansible-playbook playbook.yml --extra-vars 'vm_ip=${var.ip_address} app_port=${var.app_port}'"
+      echo "===== Deployment complete! ====="
+      echo "Access the Yolo e-commerce app at: http://${var.ip_address}:${var.app_port}"
+      echo "Test persistence: Add a product → vagrant halt/up → verify it remains"
     EOT
-  }
-}
 
-output "vm_ip" {
-  value       = var.ip_address
-  description = "IP address of the Stage 2 VM"
+    # Optional: Add error handling or environment setup
+    environment = {
+      VAGRANT_EXPERIMENTAL = "disks"  # If using newer Vagrant features
+    }
+  }
+
+  # Optional: Clean up on destroy (good practice)
+  provisioner "local-exec" {
+    when    = destroy
+    command = "vagrant destroy -f || true"
+  }
 }
