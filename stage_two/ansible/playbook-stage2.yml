@@ -2,30 +2,39 @@
 - name: Provision infrastructure with Terraform
   hosts: localhost
   connection: local
+  gather_facts: false
   collections:
-    - cloud.terraform   
+    - community.general
+  vars:
+    tf_project_path: "./stage_two/terraform"   
   tasks:
-    - name: Initialize Terraform
-      terraform:
-        project_path: ../terraform
+    - name: Apply Terraform configuration (init + apply)
+      community.general.terraform:
+        project_path: "{{ tf_project_path }}"
         state: present
-
-    - name: Apply Terraform configuration
-      terraform:
-        project_path: ../terraform
-        state: present
+        force_init: true
+        # backend_config: ...  # if you add remote state later
       register: tf_apply
 
-    - name: Debug Terraform output
+    - name: Debug Terraform outputs
       debug:
-        msg: "New VM IP: {{ tf_apply.outputs.vm_ip.value }}"
+        msg: "New VM IP from Terraform: {{ tf_apply.outputs.vm_ip.value }}"
+
+    - name: Add the new VM to in-memory inventory
+      add_host:
+        name: "stage2-vm"
+        ansible_host: "{{ tf_apply.outputs.vm_ip.value }}"
+        groups: new_vms
+        ansible_user: vagrant
+        ansible_ssh_private_key_file: "{{ lookup('fileglob', '.vagrant/machines/*/virtualbox/private_key') | default('~/.ssh/id_rsa') }}"  # adjust path
+      when: tf_apply.outputs.vm_ip.value is defined
 
 - name: Configure and deploy application on new VM
-  hosts: new_vm
+  hosts: new_vms
   become: true
+  gather_facts: true
   vars_files:
-    - ../../group_vars/all.yml   # reuse existing variables
-
+    - ../../group_vars/all.yml
   roles:
     - ../../roles/common
     - ../../roles/docker-install
