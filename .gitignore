@@ -1,3 +1,15 @@
+# Vagrant
 .vagrant/
-*.log
+
+# Terraform (for Stage 2)
+.terraform/
+*.tfstate.backup
 terraform.tfstate.backup
+
+# Ansible / temp files
+*.retry
+*.log
+
+# General
+*.swp
+.DS_Store
